@@ -1202,9 +1202,10 @@ var ArenaSim = (function(exports) {
 			turns: /* @__PURE__ */ new Map()
 		};
 		phase1Validate(ctx, input);
+		takePadsUnderfoot(ctx);
 		phase2Dashes(ctx);
 		phase3Movement(ctx);
-		phase4Pickups(ctx);
+		takePadsUnderfoot(ctx);
 		phase5Attacks(ctx);
 		phase6Zone(ctx);
 		phase7Deaths(ctx);
@@ -1308,6 +1309,7 @@ var ArenaSim = (function(exports) {
 			f.invulnerable = true;
 			f.cooldowns.dash = state.rules.dash.cooldown;
 		}
+		const claims = [];
 		for (let i = 0; i < state.rules.dash.distance && active.size > 0; i++) {
 			const movers = [];
 			for (const f of dashers) {
@@ -1324,8 +1326,22 @@ var ArenaSim = (function(exports) {
 				});
 			}
 			const ok = resolveSimultaneous(movers, occupancy(state));
-			for (const m of movers) if (!ok.has(m.id)) active.delete(m.id);
-			else state.fighters.find((f) => f.id === m.id).pos = m.to;
+			for (const m of movers) {
+				if (!ok.has(m.id)) {
+					active.delete(m.id);
+					continue;
+				}
+				const f = state.fighters.find((x) => x.id === m.id);
+				f.pos = m.to;
+				const pad = stockedPad(state, m.to);
+				if (pad) {
+					pad.available = false;
+					claims.push({
+						pad,
+						f
+					});
+				}
+			}
 		}
 		for (const f of dashers) {
 			const from = start.get(f.id);
@@ -1336,6 +1352,7 @@ var ArenaSim = (function(exports) {
 				to: [f.pos[0], f.pos[1]]
 			});
 		}
+		for (const { pad, f } of claims) takePickup(ctx, pad, f);
 	}
 	function moveCooldown(state) {
 		return state.rules.stats.move_cooldown;
@@ -1375,31 +1392,53 @@ var ArenaSim = (function(exports) {
 			f.pos = m.to;
 		}
 	}
-	/** Anyone standing on a stocked pad after movement takes it. Only one fighter fits a tile. */
-	function phase4Pickups(ctx) {
+	/**
+	* Anyone standing on a stocked pad takes it: once as the tick begins, for pads that restocked
+	* under a fighter, and again after movement (phase 4). Only one fighter fits a tile. Pads a
+	* dash enters go in phase 2, and pads a repulsor push crosses in phase 5.
+	*/
+	function takePadsUnderfoot(ctx) {
 		const { state } = ctx;
-		const rules = state.rules.pickups;
-		if (!rules) return;
+		if (!state.rules.pickups) return;
 		for (const pad of state.pickups) {
 			if (!pad.available) continue;
 			const f = alive(state).find((x) => eq(x.pos, pad.pos));
-			if (!f) continue;
-			pad.available = false;
-			const kind = pad.kind;
-			pad.respawn_tick = ctx.tick + rules[kind].respawn;
-			ctx.events.push({
-				kind: "pickup",
-				fighter: f.id,
-				pad: pad.id,
-				pickup: pad.kind,
-				pos: [pad.pos[0], pad.pos[1]]
-			});
-			if (kind === "health") f.hp = Math.min(state.rules.stats.max_hp, f.hp + rules.health.amount);
-			else {
-				const buff = rules[kind];
-				f.buffs[kind] = Math.max(f.buffs[kind] ?? -1, ctx.tick + buff.duration - 1);
-			}
+			if (f) takePickup(ctx, pad, f);
 		}
+	}
+	/** The stocked pad on `pos`, if pickups are on and there is one. */
+	function stockedPad(state, pos) {
+		if (!state.rules.pickups) return void 0;
+		return state.pickups.find((p) => p.available && eq(p.pos, pos));
+	}
+	/**
+	* `f` takes `pad`. A buff taken while repulsors resolve is granted through `later`, once every
+	* repulsor has landed: they land in fighter-id order, so granting it at once would let a
+	* fighter pushed onto power by a lower id boost its own repulsor that tick, and never the reverse.
+	*/
+	function takePickup(ctx, pad, f, later) {
+		const { state } = ctx;
+		const rules = state.rules.pickups;
+		pad.available = false;
+		const kind = pad.kind;
+		pad.respawn_tick = ctx.tick + rules[kind].respawn;
+		ctx.events.push({
+			kind: "pickup",
+			fighter: f.id,
+			pad: pad.id,
+			pickup: pad.kind,
+			pos: [pad.pos[0], pad.pos[1]]
+		});
+		if (kind === "health") {
+			f.hp = Math.min(state.rules.stats.max_hp, f.hp + rules.health.amount);
+			return;
+		}
+		const buff = rules[kind];
+		const grant = () => {
+			f.buffs[kind] = Math.max(f.buffs[kind] ?? -1, ctx.tick + buff.duration - 1);
+		};
+		if (later) later.push(grant);
+		else grant();
 	}
 	/**
 	* Attacks fire the tick they are sent, after movement. Repulsors resolve first, from
@@ -1443,6 +1482,7 @@ var ArenaSim = (function(exports) {
 			...r,
 			hits: repulsorHits(ctx, r.f, r.name)
 		}));
+		const later = [];
 		for (const r of repulses) {
 			const atk = rules.attacks[r.name];
 			if (atk.kind !== "burst") continue;
@@ -1452,9 +1492,10 @@ var ArenaSim = (function(exports) {
 					attack: r.name,
 					damage: atk.damage
 				}, t);
-				push(ctx, r.f, t, octant(r.f.pos, t.pos), atk.push);
+				push(ctx, r.f, t, octant(r.f.pos, t.pos), atk.push, later);
 			}
 		}
+		for (const grant of later) grant();
 		for (const { f, name, target, direction } of fired) {
 			const atk = rules.attacks[name];
 			if (atk.kind === "area") {
@@ -1594,11 +1635,11 @@ var ArenaSim = (function(exports) {
 		return ctx.state.fighters.filter((t) => t.alive && !t.invulnerable && weaponCanAffect(ctx.state, f.id, t) && tiles.some((p) => eq(p, t.pos)));
 	}
 	/**
-	* Shoves `t` up to `tiles` steps in `dir`, one at a time. A wall (or a corner it
-	* can't cut past) stops it with a slam: damage and a stun. Another fighter stops it
-	* with a collision that hurts both.
+	* Shoves `t` up to `tiles` steps in `dir`, one at a time, taking each stocked pad it lands on.
+	* A wall (or a corner it can't cut past) stops it with a slam: damage and a stun. Another
+	* fighter stops it with a collision that hurts both.
 	*/
-	function push(ctx, attacker, t, dir, tiles) {
+	function push(ctx, attacker, t, dir, tiles, later) {
 		const { state } = ctx;
 		const kb = state.rules.knockback;
 		const from = [t.pos[0], t.pos[1]];
@@ -1636,6 +1677,8 @@ var ArenaSim = (function(exports) {
 				break;
 			}
 			t.pos = next;
+			const pad = stockedPad(state, t.pos);
+			if (pad && t.hp > 0) takePickup(ctx, pad, t, later);
 		}
 		if (!eq(from, t.pos)) ctx.events.push({
 			kind: "knockback",
@@ -1727,7 +1770,7 @@ var ArenaSim = (function(exports) {
 		state.tick += 1;
 	}
 	// packages/engine/src/replay.ts
-	var ENGINE_VERSION = "0.23.0";
+	var ENGINE_VERSION = "0.24.0";
 	function makeHeader(rules, map, seed, bots) {
 		return {
 			type: "header",
@@ -1770,7 +1813,7 @@ var ArenaSim = (function(exports) {
 	}
 	function checkCompatible(header) {
 		if (header.replay_format !== void 0 && header.replay_format !== 1) throw new Error(`replay: unsupported format ${header.replay_format}`);
-		if (header.engine !== "0.23.0") throw new Error(`replay: recorded with engine ${header.engine}, this is ${ENGINE_VERSION}`);
+		if (header.engine !== "0.24.0") throw new Error(`replay: recorded with engine ${header.engine}, this is ${ENGINE_VERSION}`);
 		const rules = loadRules(header.rules);
 		if (rulesHash(rules) !== header.rules_hash) throw new Error("replay: rules hash mismatch");
 		return {
@@ -1930,7 +1973,10 @@ var ArenaSim = (function(exports) {
 		}
 		const events = step(state, turns);
 		stats.ticks += 1;
+		const hp = new Map([...before].map(([id, b]) => [id, b.hp]));
 		const hurt = (target, source, n, attacker) => {
+			const now = hp.get(target);
+			if (now !== void 0) hp.set(target, Math.max(0, now - n));
 			const t = fighter(target);
 			if (t) t.damage_taken += n, bump(t.taken_by_source, source, n);
 			const a = attacker === void 0 || attacker === target ? void 0 : fighter(attacker);
@@ -1965,9 +2011,13 @@ var ArenaSim = (function(exports) {
 				const f = fighter(e.fighter);
 				if (!f) break;
 				bump(f.pickups, e.pickup);
-				const b = before.get(e.fighter);
+				const was = hp.get(e.fighter);
 				const amount = state.rules.pickups?.health?.amount ?? 0;
-				if (e.pickup === "health" && b) f.healed += Math.min(state.rules.stats.max_hp, b.hp + amount) - b.hp;
+				if (e.pickup === "health" && was !== void 0) {
+					const now = Math.min(state.rules.stats.max_hp, was + amount);
+					f.healed += now - was;
+					hp.set(e.fighter, now);
+				}
 				break;
 			}
 			case "wall_slam": {
@@ -10171,7 +10221,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 	* that doesn't match). The downloadable simulator and the Python package carry it, so a player
 	* can tell whether their copy is the one the ladder runs (GET /api versions.release).
 	*/
-	var RELEASE = "0.90.0";
+	var RELEASE = "0.91.0";
 	// packages/sim/src/match.ts
 	/** No usable reply before the deadline. */
 	function timeoutOutcome() {

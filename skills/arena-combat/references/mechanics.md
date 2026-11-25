@@ -119,8 +119,11 @@ From https://victrisarena.com/docs/bot-guide#dashing-and-corners
 
 ## Pickups
 
-Pads on the map hold pickups. To take one, end a move or dash on its tile: it costs no action and no
-tick. Pads are stocked on tick 20 and restock a fixed time after they are taken.
+Pads on the map hold pickups. To take one, step onto its tile or dash onto or through it: a dash
+takes every stocked pad it passes, not only where it lands. It costs no action and no tick. A
+fighter pushed by a repulsor takes the pads it is pushed across too, so shoving an enemy over a pad
+hands it the pickup. A pad that restocks under you is yours as the tick begins, even if you move off
+it. Pads are stocked on tick 20 and restock a fixed time after they are taken.
 `observation.pickups` lists the pads in sight, with `ready_in: 0` when stocked, otherwise the ticks
 until it restocks.
 

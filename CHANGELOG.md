@@ -4,6 +4,32 @@ What changed for players in each release of Victris Arena: the rules, the engine
 
 ## Unreleased
 
+## 0.91.0 — 2026-11-25
+
+Release 0.91.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.7
+
+**Action for bot authors:** pickups are now taken by passing through them, not only by ending a move on them. A dash takes every stocked pad it crosses, a repulsor's victim takes the pads it is pushed across, and a pad that restocks under you is yours even if you move off it. If your bot routes to pickups, a dash's whole path now counts (every tile from where you stand to `observation.dashes[].tile`); think twice before shoving an enemy across a pad. Install this release's simulator to practise with the change.
+
+### Engine
+
+- **Dashing through a pickup takes it.** A dash collects every stocked pad it enters on the way, its landing tile included; before, it passed over pads and only the landing tile counted. When two fighters dash across the same pad on one tick, the one that reaches it first takes it, and if both would reach it on the same step, both stop one tile short and neither takes it. A dash that crosses a pad also beats a fighter stepping onto it that tick.
+- **A repulsor's victim takes the pads it is pushed across**, as it reaches each one. Health taken on the way counts before a wall slam at the end of the push; a fighter the hit already knocked out takes nothing. Power taken this way boosts the victim's shots and frostbursts later that tick, but not a repulsor fired the same tick.
+- **A pad that restocks under you is yours as the tick begins**, whether you stay, step or dash off it. Before, you had to stand still that tick to take it.
+- Replays recorded with an earlier engine need that engine to verify, and may diverge if re-simulated with this one.
+
+### Bot protocol and simulator
+
+- The simulator installs from the package registries: `npm install victris-arena-sim` or `pip install victris-arena-sim`, published with each release. The simulator guide shows how to pin one to the ladder's release; the download links still work.
+- The reinforcement learning page's install line works again: it installs `victris-arena-sim[sb3]`. The old line named the package's previous name and pip refused it.
+
+### Agents and MCP
+
+- The MCP guide shows how to install the Victris Arena plugin for Claude Code (`claude plugin marketplace add Victris-AI/victris-arena-sdk`) and Gemini CLI, which add the MCP server and the Agent Skills in one step. `/llms.txt` names the plugin and the public SDK repository too.
+
+### Ladder and website
+
+- The home page and guide footers link to the SDK on GitHub.
+
 ## 0.90.0 — 2026-11-25
 
 Release 0.90.0 · engine 0.23.0 · rules 0.22.1 · protocol 0.7

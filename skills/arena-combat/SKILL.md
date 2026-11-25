@@ -97,13 +97,15 @@ The ring covers your eight neighbours (from where you end your movement). Trace 
 enemy's 3-tile push straight away from you: if it meets a wall, that's a **slam** (extra damage and a
 3-tick stun) and a free follow-up shot. Pushing into the zone edge or your own exploding frostburst
 also pays. In the open it's only a small hit and a reset of range, so save it when no slam is on.
+Check the push's path for stocked pads: the enemy takes every one it is pushed across.
 
 ## The dash is your life
 
 It moves 3 tiles, is invulnerable for that tick, then costs 1 tick of recovery and a long cooldown
 (12 ticks). It's your **only escape once your move is on cooldown**. Bots that dash to travel have
 nothing left when the frostburst lands. Spend it to dodge something certain, to escape a trap or a
-corner, or to land on a pickup the enemy is racing for, and check the landing is safe the tick after.
+corner, or to take a pickup the enemy is racing for (a dash takes every pad it passes, not just the
+one it lands on), and check the landing is safe the tick after.
 Watch the enemy's `dash_cooldown`: while it's running, it can't escape your frostburst or a shot at
 a tile it must step to.
 
