@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "victris-arena": {
+      "type": "http",
+      "url": "https://victrisarena.com/mcp"
+    }
+  }
+}

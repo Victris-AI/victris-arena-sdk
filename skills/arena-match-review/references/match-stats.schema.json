@@ -1,0 +1,454 @@
+{
+  "title": "match-stats",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "stats_version": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "bumped whenever a field changes meaning"
+    },
+    "map": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "ticks": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "ticks resolved"
+    },
+    "winner": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "fighter id of the winner, or null for a draw"
+    },
+    "reason": {
+      "description": "how the match ended",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fighters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "occupancy": {
+            "description": "Row-major occupancy: one sample at the start of each resolved tick while alive; absent in older statistics",
+            "type": "object",
+            "properties": {
+              "width": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "height": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "counts": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              }
+            },
+            "required": [
+              "width",
+              "height",
+              "counts"
+            ],
+            "additionalProperties": false
+          },
+          "id": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "fighter id, as in hello.bot_id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "hp": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "hp at the end of the match"
+          },
+          "alive": {
+            "type": "boolean"
+          },
+          "moves": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "one-tile steps taken"
+          },
+          "moves_blocked": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "accepted steps that didn't happen because another fighter was in the way"
+          },
+          "dashes": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "dash_tiles": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "tiles covered by dashing"
+          },
+          "weapons": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "uses": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "attacks fired: sent and accepted by the engine"
+                },
+                "hits": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "hits on an opponent"
+                },
+                "damage": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "hp those hits removed, the power buff included"
+                }
+              },
+              "required": [
+                "uses",
+                "hits",
+                "damage"
+              ],
+              "additionalProperties": false
+            },
+            "description": "by attack name; every attack in the rules is listed. Accuracy is hits / uses"
+          },
+          "ricochets": {
+            "type": "object",
+            "properties": {
+              "bounces": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "shots that bounced off a wall"
+              },
+              "hits": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "hits scored after a bounce (also counted in weapons)"
+              },
+              "damage": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "bounces",
+              "hits",
+              "damage"
+            ],
+            "additionalProperties": false
+          },
+          "pickups": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "pickups taken, by kind; every kind in the rules is listed"
+          },
+          "healed": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "hp restored by health pickups"
+          },
+          "damage_dealt": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "hp removed from opponents"
+          },
+          "dealt_by_source": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "damage_dealt by source: attack names, \"wall_slam\", \"collision\""
+          },
+          "damage_taken": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "hp lost"
+          },
+          "taken_by_source": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "damage_taken by source: attack names, \"wall_slam\", \"collision\", \"zone\""
+          },
+          "wall_slams": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "opponents this fighter's repulsor slammed into a wall"
+          },
+          "knocked_back": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "times this fighter was shoved"
+          },
+          "stunned": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "times this fighter was stunned"
+          },
+          "zone_ticks": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "ticks ended outside the safe zone"
+          },
+          "rejected": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "parts of turns the engine refused, by reason"
+          },
+          "refused_turns": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "turns with at least one refused part"
+          },
+          "refused_turns_by_reason": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "turns with a refused part, by reason; a turn counts once per reason"
+          },
+          "server_idles": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "ticks the server played as idle for this fighter, by reason (timeout, malformed_json, disconnected…)"
+          },
+          "timing": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "replies": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "timed replies, timeouts included (a reply that never came counts at the deadline)"
+                  },
+                  "mean_ms": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "p50_ms": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "median reply; added up over several matches, the upper bound of its histogram bucket"
+                  },
+                  "p95_ms": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "95th percentile reply; added up over several matches, the upper bound of its histogram bucket"
+                  },
+                  "max_ms": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "slowest reply"
+                  },
+                  "near_limit": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "replies that took at least 80% of the tick limit: one slow moment from a timeout"
+                  },
+                  "tick_ms": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "the per-tick limit the replies were timed against"
+                  },
+                  "budget_ms": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "the match's total response-time budget"
+                  },
+                  "budget_ms_left": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "budget left at the end of the match (the lowest, added up over several)"
+                  },
+                  "histogram": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "description": "replies per bucket: upper bounds 10, 25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 850, 900, 950, 1000 thousandths of tick_ms, then slower"
+                  }
+                },
+                "required": [
+                  "replies",
+                  "mean_ms",
+                  "p50_ms",
+                  "p95_ms",
+                  "max_ms",
+                  "near_limit",
+                  "tick_ms",
+                  "budget_ms",
+                  "budget_ms_left",
+                  "histogram"
+                ],
+                "additionalProperties": false,
+                "description": "how long the bot took to reply, as the server timed it: from sending the observation to the reply arriving, network included"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "reply times; null when nothing was timed (the simulator doesn't time replies)"
+          },
+          "disconnects": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "contiguous runs of recorded disconnected idle turns for this fighter, not socket-close events"
+          },
+          "disqualified": {
+            "type": "boolean",
+            "description": "the match ended because this fighter failed too many ticks in a row"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "version",
+          "hp",
+          "alive",
+          "moves",
+          "moves_blocked",
+          "dashes",
+          "dash_tiles",
+          "weapons",
+          "ricochets",
+          "pickups",
+          "healed",
+          "damage_dealt",
+          "dealt_by_source",
+          "damage_taken",
+          "taken_by_source",
+          "wall_slams",
+          "knocked_back",
+          "stunned",
+          "zone_ticks",
+          "rejected",
+          "refused_turns",
+          "refused_turns_by_reason",
+          "server_idles",
+          "timing",
+          "disconnects",
+          "disqualified"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "stats_version",
+    "map",
+    "seed",
+    "ticks",
+    "winner",
+    "reason",
+    "fighters"
+  ],
+  "additionalProperties": false,
+  "description": "what each fighter did over one match"
+}

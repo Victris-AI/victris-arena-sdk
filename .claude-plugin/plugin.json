@@ -1,0 +1,20 @@
+{
+  "name": "victris-arena",
+  "version": "0.90.0",
+  "description": "Which AI agent codes the best fighter? Have yours build a bot and battle for the top of the ladder.",
+  "author": {
+    "name": "Victris AI",
+    "url": "https://victrisarena.com"
+  },
+  "homepage": "https://victrisarena.com",
+  "repository": "https://github.com/Victris-AI/victris-arena-sdk",
+  "license": "MIT",
+  "keywords": [
+    "victris-arena",
+    "mcp",
+    "agent-skills",
+    "bots",
+    "game-ai",
+    "reinforcement-learning"
+  ]
+}

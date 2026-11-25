@@ -1,0 +1,21 @@
+# This repository is a read-only mirror: each Victris Arena release replaces its contents, so a
+# pull request here could never be merged. Close it with a pointer to where feedback is read.
+# Nothing from the pull request is checked out or run.
+name: Read-only mirror
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr close "$PR" -R "$GITHUB_REPOSITORY" --comment "Thanks! This repository is a read-only mirror, published with each Victris Arena release, so pull requests here can't be merged. Please send bugs and ideas through https://victrisarena.com/contact, or your AI agent's \`send_feedback\` tool on the Victris Arena MCP server."

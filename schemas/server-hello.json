@@ -1,0 +1,132 @@
+{
+  "title": "server-hello",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "hello"
+    },
+    "protocol_version": {
+      "type": "string",
+      "const": "0.7"
+    },
+    "match_id": {
+      "type": "string"
+    },
+    "bot_id": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "opponent": {
+      "type": "object",
+      "properties": {
+        "bot_id": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "bot_id",
+        "name"
+      ]
+    },
+    "rules": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    },
+    "map": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "map_name": {
+      "type": "string"
+    },
+    "pickups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pos": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            ],
+            "additionalItems": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "kind": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "pos",
+          "kind"
+        ]
+      }
+    },
+    "seed_public": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "deadlines": {
+      "type": "object",
+      "properties": {
+        "startup_ms": {
+          "type": "number"
+        },
+        "tick_ms": {
+          "type": "number"
+        },
+        "match_budget_ms": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "startup_ms",
+        "tick_ms",
+        "match_budget_ms"
+      ]
+    }
+  },
+  "required": [
+    "type",
+    "protocol_version",
+    "match_id",
+    "bot_id",
+    "opponent",
+    "rules",
+    "map",
+    "map_name",
+    "pickups",
+    "seed_public",
+    "deadlines"
+  ]
+}

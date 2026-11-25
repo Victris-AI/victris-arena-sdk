@@ -1,0 +1,52 @@
+[project]
+# Installed as victris-arena-sim, imported as arena_sim (the package was arena-sim through 0.89.x).
+name = "victris-arena-sim"
+dynamic = ["version"]
+description = "Victris Arena's simulator for Python: the ladder's own match code in embedded V8, with Gymnasium and PettingZoo environments"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Victris AI" }]
+keywords = ["victris-arena", "simulator", "gymnasium", "pettingzoo", "reinforcement-learning", "game-ai", "bots"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Topic :: Games/Entertainment",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = ["mini-racer>=0.12", "gymnasium>=1.1", "numpy>=1.24"]
+
+[project.urls]
+Homepage = "https://victrisarena.com"
+Documentation = "https://victrisarena.com/guide/simulator"
+Source = "https://github.com/Victris-AI/victris-arena-sdk"
+Changelog = "https://victrisarena.com/changelog"
+
+[project.optional-dependencies]
+pettingzoo = ["pettingzoo>=1.24"]
+sb3 = ["stable-baselines3>=2.3", "sb3-contrib>=2.3"]
+torch = ["torch>=2.3"]
+dev = ["pytest>=8", "pettingzoo>=1.24", "stable-baselines3>=2.3", "sb3-contrib>=2.3", "torch>=2.3"]
+
+# Tests and CI train small SB3 models on the CPU: take torch's CPU build, not the CUDA one.
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# The package's version is the release of the game it carries, read from the game itself.
+[tool.hatch.version]
+path = "src/arena_sim/arena-sim.js"
+pattern = '\bRELEASE = "(?P<version>[^"]+)"'
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/arena_sim"]
+# The game itself, built by `bun run build:sim` and copied in by `bun run build:py`, with its
+# source map (the TypeScript it was built from) and the release notes; gitignored.
+artifacts = ["src/arena_sim/arena-sim.js", "src/arena_sim/arena-sim.js.map", "src/arena_sim/CHANGELOG.md"]

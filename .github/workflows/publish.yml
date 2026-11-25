@@ -1,0 +1,87 @@
+# Publishes a Victris Arena release from this mirror when its tag arrives: the GitHub release
+# (Gemini CLI reads versions from it), and victris-arena-sim on PyPI and npm. Both registries
+# trust this workflow file and its `release` environment instead of a stored token. A version a
+# registry already has is skipped, so a rerun is safe.
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" --verify-tag \
+              --title "Victris Arena ${GITHUB_REF_NAME#v}" \
+              --notes "What changed for players and bot authors: https://victrisarena.com/changelog"
+
+  pypi:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+      - name: Build
+        id: build
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          uv build python --out-dir dist
+          ls dist | grep -q "^victris_arena_sim-$version-py3-none-any\.whl$" ||
+            { echo "::error::the wheel isn't version $version"; exit 1; }
+          if curl -fsS -o /dev/null "https://pypi.org/pypi/victris-arena-sim/$version/json"; then
+            echo "PyPI already has $version"
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.build.outputs.skip != '1'
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          packages-dir: dist
+
+  npm:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@^11.5.1
+      - name: Publish
+        working-directory: sim
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          test "$(node -p 'require("./package.json").version')" = "$version" ||
+            { echo "::error::sim/package.json isn't version $version"; exit 1; }
+          if npm view "victris-arena-sim@$version" version > /dev/null 2>&1; then
+            echo "npm already has $version"
+            exit 0
+          fi
+          # A trusted publisher can only be added to a package that exists: its first version is
+          # published by hand.
+          if ! npm view victris-arena-sim name > /dev/null 2>&1; then
+            echo "::warning::victris-arena-sim isn't on npm yet; publish its first version by hand"
+            exit 0
+          fi
+          npm publish --access public

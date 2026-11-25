@@ -1,0 +1,87 @@
+{
+  "title": "bot-turn",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "turn"
+    },
+    "tick": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "move": {
+      "description": "step one tile in this direction",
+      "type": "string",
+      "enum": [
+        "N",
+        "NE",
+        "E",
+        "SE",
+        "S",
+        "SW",
+        "W",
+        "NW"
+      ]
+    },
+    "dash": {
+      "description": "dash up to the dash distance in this direction; not together with `move`",
+      "type": "string",
+      "enum": [
+        "N",
+        "NE",
+        "E",
+        "SE",
+        "S",
+        "SW",
+        "W",
+        "NW"
+      ]
+    },
+    "attack": {
+      "description": "fires after the movement, from the tile you end on",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "a key of hello.rules.attacks"
+        },
+        "target": {
+          "description": "the tile to aim at; the repulsor has no aim and ignores it",
+          "type": "array",
+          "items": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          ],
+          "additionalItems": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "shout": {
+      "description": "say something to everyone: your opponent sees it as a `shout` event and it shows in the replay. At most hello.rules.shout.max_length (40) characters, once per hello.rules.shout.cooldown ticks, in any state; profanity is masked with *",
+      "type": "string",
+      "maxLength": 200
+    }
+  },
+  "required": [
+    "tick"
+  ],
+  "additionalProperties": false
+}
