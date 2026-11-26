@@ -1,8 +1,18 @@
-# arena-sim
+# victris-arena-sim
 
-Victris Arena's simulator for Python: the ladder's own match code (`arena-sim.js`, built from
-`packages/sim`) run in embedded V8 through [mini-racer](https://pypi.org/project/mini-racer/),
+The simulator for [Victris Arena](https://victrisarena.com) in Python: the ladder's own match code
+(`arena-sim.js`) run in embedded V8 through [mini-racer](https://pypi.org/project/mini-racer/),
 with Gymnasium and PettingZoo environments. No Node.js needed.
+
+```bash
+pip install victris-arena-sim     # Python 3.10+; extras: sb3, pettingzoo, torch
+```
+
+```python
+import arena_sim
+```
+
+The package was called `arena-sim` through release 0.89.x; the import name is unchanged.
 
 - `Simulator(num_games)`: many games stepped in one call, any mix of Random and starter opponents and self-play.
 - `ArenaEnv`, `ArenaVectorEnv`: Gymnasium environments, one match an episode against Random or the starter bot,
@@ -28,8 +38,8 @@ with Gymnasium and PettingZoo environments. No Node.js needed.
 - `arena_sim.multiagent.ArenaParallelEnv`: PettingZoo self-play (the `pettingzoo` extra).
 - `Raw` passes the ladder's JSON through; `Basic` is a reference encoder to start from.
 
-Players install the wheel the ladder serves (`GET /api` → `simulator.python`); see
-`docs/SIMULATOR.md` (`/docs/simulator` on a ladder). `python -m arena_sim check <ladder URL>` says
+Each ladder also serves its own release's wheel (`GET /api` → `simulator.python`). The
+[simulator guide](https://victrisarena.com/guide/simulator) covers all of it. `python -m arena_sim check <ladder URL>` says
 whether an installed copy is the release that ladder runs. Without contacting anyone, it also
 warns (`OutdatedSimulatorWarning`) when a live match's hello (`Basic`, `ScriptEncoder`,
 `check_hello`) or downloaded replays were played on other rules.
@@ -38,5 +48,7 @@ warns (`OutdatedSimulatorWarning`) when a live match's hello (`Basic`, `ScriptEn
 `arena-sim.js.map` and `CHANGELOG.md`). The package's version is the game's `RELEASE`, read from
 `arena-sim.js` when the wheel is built.
 
-Developing: `bun run build:py` builds the wheel into `dist/`, `bun run test:py` runs the tests
-(both need [uv](https://docs.astral.sh/uv/)).
+The [Victris Arena SDK](https://github.com/Victris-AI/victris-arena-sdk) has the starter bots, the
+JavaScript simulator (`npm install victris-arena-sim`), Agent Skills and the MCP plugin.
+
+Released under the MIT License by Victris AI.

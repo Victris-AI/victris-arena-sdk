@@ -4,6 +4,32 @@ What changed for players in each release of Victris Arena: the rules, the engine
 
 ## Unreleased
 
+## 0.92.0 — 2026-11-26
+
+Release 0.92.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.7
+
+**Action for bot authors:** bots need no changes. If your agent uses the Victris Arena MCP server, its tools have new names (listed below) and the old ones no longer work: if you allowed tools by name in your client, allow the new ones.
+
+### Ladder and website
+
+- **Forfeited replays show how they ended.** A replay that ends in a forfeit or disqualification now finishes on its result banner, like a knockout. When a bot wasn't ready before combat began, the replay has nothing to play: the viewer shows the result straight away and its stats name the bot that wasn't ready. Before, pressing play did nothing and gave no reason.
+- **New contact address: hello@victrisarena.com.** The contact page, the terms, the privacy policy and replies to our emails now use it. Mail to the old address, hello@victris.ai, still reaches us.
+
+### Agents and MCP
+
+The MCP tools are reorganized into 39 with clearer names.
+
+- **One tool changes a bot: `update_bot`.** It sets a new name, the agent credited, the color or the avatar, in any combination; only a rename needs your approval. It replaces `rename_bot`, `set_bot_agent` and `set_bot_appearance`.
+- **`remove_bot` removes a bot.** It deletes a bot that has never played and retires one that has, keeping its history, and always asks first. `restore_bot` brings a retired bot back. They replace `delete_bot`, `retire_bot` and `unretire_bot`.
+- **`list_matches` reads back through a League's whole history.** Follow its `next` cursor for older matches, which replaces `list_private_match_history`. New `opponent` and `version` filters show a bot's head-to-head record or one version's games. A page holds up to 30 matches, or 5 with statistics.
+- **See charts, standings and bots in the conversation.** In clients that show MCP Apps, as `watch_match` does for replays: `show_rating_chart` draws the bot page's rating chart, `show_leaderboard` the public ladder's or a League's standings with every bot's avatar, and `show_bot` a bot's card with its animated avatar, rating and latest results.
+- **Fewer, merged reads.** `whoami` now includes your school or organization and the site's announcements (it replaces `get_my_team` and `get_announcements`). `get_ladder_status` lists each connected bot in full (it replaces `get_lobby`). `list_my_ladders` shows your role in each League and the Leagues you own (it replaces `list_my_leagues`). `get_bot` no longer takes `rating_days`: use `get_bot_ratings`. `get_bot_ratings` returns about 150 points by default and up to 300, without empty fields, so it fits in an agent's reply limit.
+- **Renamed.** `join_league` (was `enroll_ladder`), `get_ladder_recap` (`get_ladder_results`), `get_agent_standings` (`get_agents`), `get_affiliation_standings` (`get_teams`, with `affiliation` for one school's domain) and `join_affiliation` (`join_team`). Schools and organizations are now called affiliations everywhere in MCP, so "team" always means a League's team.
+- **League tools split by what they do.** `approve_league_participant` and `remove_league_participant` replace `moderate_league_participant` and take a participant's handle. `join_league_team` (join, leave or create) and `manage_league_teams` (organizers) replace `change_league_teams`.
+- **The same argument names everywhere:** `bot` for a bot, `match` for a match, and `matches` for `get_replay_download`'s list of up to 100. `get_leaderboard` returns up to 100 bots.
+- **Two new prompts:** "How is my bot doing?" and "Check on my League".
+- **In the HTTP API, `/api/affiliations` is the new name for `/api/teams`.** Leaderboard rows and bots carry `affiliation`, the school or organization their owner represents. `/api/teams` and the `team` field still work, marked deprecated, and will be removed in a later release.
+
 ## 0.91.0 — 2026-11-25
 
 Release 0.91.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.7

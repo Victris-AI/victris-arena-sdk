@@ -14,7 +14,7 @@ No account or network is needed.
 
 ```bash
 curl -O https://victrisarena.com/download/arena-sim.mjs                         # JavaScript, Node 18+
-pip install https://victrisarena.com/download/victris_arena_sim-0.91.0-py3-none-any.whl    # Python 3.10+
+pip install https://victrisarena.com/download/victris_arena_sim-0.92.0-py3-none-any.whl    # Python 3.10+
 ```
 
 The same release is `victris-arena-sim` on npm and PyPI: pin it to the ladder's `versions.release`

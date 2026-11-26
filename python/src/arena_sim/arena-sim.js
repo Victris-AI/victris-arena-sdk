@@ -10221,7 +10221,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 	* that doesn't match). The downloadable simulator and the Python package carry it, so a player
 	* can tell whether their copy is the one the ladder runs (GET /api versions.release).
 	*/
-	var RELEASE = "0.91.0";
+	var RELEASE = "0.92.0";
 	// packages/sim/src/match.ts
 	/** No usable reply before the deadline. */
 	function timeoutOutcome() {
