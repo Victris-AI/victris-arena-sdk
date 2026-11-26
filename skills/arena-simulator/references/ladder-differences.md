@@ -30,9 +30,13 @@ simulator is current while its release and rules hash match the ladder's (`GET /
 
 - **Hear about releases.** Subscribe to `https://victrisarena.com/changelog.atom`. A release that
   changes the rules says so in its title: until you update, the simulator plays another game.
-- **The Python package warns when the ladder plays other rules.** It compares what the ladder has
-  already sent you with the rules it ships, and raises an `OutdatedSimulatorWarning` (once per rules
-  table) when they differ. It never contacts a ladder on its own to do it:
+- **A match names its engine.** Each `hello` carries `engine_version`. The engine can change in a
+  release while `rules.version` stays the same, so a bot that relies on the engine's exact steps
+  compares that, not only the rules. The forward model does it for you: `forward.start` and
+  `forward.fromObservation` refuse a hello from another engine.
+- **The Python package warns when the ladder plays other rules or another engine.** It compares what
+  the ladder has already sent you with the rules and engine it ships, and raises an
+  `OutdatedSimulatorWarning` (once per rules table or engine version) when they differ. It never contacts a ladder on its own to do it:
   - a live match's `hello`, when `Basic` or `ScriptEncoder` encodes the match's first observation.
     With an encoder of your own, call `check_hello(hello)` when a match starts;
   - the replays `download_replays` fetches (each replay's header records its rules).
@@ -42,8 +46,10 @@ simulator is current while its release and rules hash match the ladder's (`GET /
 
 - **See what changed.** `python -m arena_sim changelog` prints the ladder's release notes since
   yours (`changelog()` in Python). Each package also carries its own release's notes.
-- **Read the source.** Each release ships the TypeScript it was built from, as source maps next to
-  the bundles (`arena-sim.mjs.map`, `arena-sim.js.map`) and inside the Python package:
+- **Read the source.** The engine's TypeScript is in the
+  [Victris Arena SDK](https://github.com/Victris-AI/victris-arena-sdk) repository's `engine/` folder,
+  with the maps in `maps/`, at every release's tag: compare two tags to see exactly what changed.
+  Each release also ships the TypeScript it was built from, as source maps next to the bundles (`arena-sim.mjs.map`, `arena-sim.js.map`) and inside the Python package:
   `python -m arena_sim source ./arena-src` writes it out (`packages/engine/src/…`, `packages/sim/src/…`)
   with that release's `CHANGELOG.md`.
 - **Go back to a release.** Every release's downloads stay at `/download/<release>/…`, for example
@@ -65,6 +71,7 @@ if (api.versions.release !== RELEASE || api.versions.rules_hash !== rulesHash(SH
 // A live bot can check the rules it trained on at the start of each match. The ladder writes its
 // live limits into hello.rules.limits, which don't change the game, so leave them out:
 // rulesHash({ ...hello.rules, limits: SHIPPED_RULES.limits }) === rulesHash(SHIPPED_RULES)
+// and its engine: hello.engine_version === ENGINE_VERSION (import it too)
 ```
 
 From https://victrisarena.com/docs/simulator#staying-current

@@ -8185,7 +8185,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 	/** Bumped whenever a bot-facing message changes shape. 0.2 introduced the `turn` message; 0.3 made
 	*  `queue` just a version and removed availability and challenges; 0.4 added `shout`;
 	*  0.5 added the ladder's `server_draining` notice; 0.6 added optional ladder IDs; 0.7 added `quota_exceeded`'s quota fields. */
-	var PROTOCOL_VERSION = "0.7";
+	var PROTOCOL_VERSION = "0.8";
 	var Dir = _enum([
 		"N",
 		"NE",
@@ -8277,7 +8277,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 	});
 	object({
 		type: literal("hello"),
-		protocol_version: literal("0.7"),
+		protocol_version: literal("0.8"),
 		match_id: string(),
 		bot_id: number().int(),
 		opponent: object({
@@ -8294,6 +8294,11 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			kind: string()
 		})),
 		seed_public: number().int(),
+		/**
+		* the engine version this match runs (also GET /api versions.engine). It can change while
+		* rules.version stays the same, so a bot that copies the engine checks this one
+		*/
+		engine_version: string(),
 		deadlines: object({
 			startup_ms: number(),
 			tick_ms: number(),
@@ -10221,7 +10226,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 	* that doesn't match). The downloadable simulator and the Python package carry it, so a player
 	* can tell whether their copy is the one the ladder runs (GET /api versions.release).
 	*/
-	var RELEASE = "0.92.0";
+	var RELEASE = "0.93.0";
 	// packages/sim/src/match.ts
 	/** No usable reply before the deadline. */
 	function timeoutOutcome() {
@@ -10337,7 +10342,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			const { limits } = this.opts;
 			return {
 				type: "hello",
-				protocol_version: "0.7",
+				protocol_version: "0.8",
 				match_id: this.opts.matchId,
 				bot_id: fighterId,
 				opponent: {
@@ -10349,6 +10354,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 				map_name: this.opts.map.name,
 				pickups: pickupPads(this.opts.map),
 				seed_public: this.opts.seed,
+				engine_version: ENGINE_VERSION,
 				deadlines: {
 					startup_ms: limits.startup_ms,
 					tick_ms: limits.tick_ms,
@@ -11206,6 +11212,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			this.parsed.clear();
 			if (!this.over) this.ask();
 		}
+		/**
+		* A copy of the whole match state as it stands, fog and all: what `forward` steps. For
+		* training and testing a search with the truth; on the ladder a bot only has its observations.
+		*/
+		state() {
+			return cloneState(this.core.state);
+		}
 		/** The finished match: result, replay and stats. */
 		summary() {
 			return this.core.summary();
@@ -11466,6 +11479,168 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 			mismatches
 		};
 	}
+	// packages/sim/src/forward.ts
+	/** The forward model's contract version. It changes when a function's arguments or results do. */
+	var FORWARD_API_VERSION = 1;
+	/** The hello's map as the engine's map: the shipped map of that name, or `map` for one of your own. */
+	function helloMap(hello, map) {
+		const m = map ?? SHIPPED_MAPS.find((x) => x.name === hello.map_name);
+		if (!m) throw new Error(`forward: map '${hello.map_name}' isn't one this simulator ships; pass the map object as well`);
+		if (m.tiles.length !== hello.map.length || m.tiles.some((row, y) => row !== hello.map[y])) throw new Error(`forward: the hello's map differs from this simulator's '${m.name}' (a newer release?); pass the map object as well`);
+		return m;
+	}
+	function helloRules(hello) {
+		const engine = hello.engine_version;
+		if (engine !== void 0 && engine !== "0.24.0") throw new Error(`forward: this match runs engine ${engine}, but this simulator has engine ${ENGINE_VERSION}; its steps would not be the ladder's. Install the ladder's simulator (GET /api → simulator)`);
+		return loadRules(hello.rules);
+	}
+	/**
+	* The match's state on its first tick, exactly as the ladder starts it. The hello names the map
+	* and carries the seed, which decides the spawns, so nothing about the start is hidden.
+	*/
+	function start(hello, map) {
+		return createMatch(helloRules(hello), helloMap(hello, map), hello.seed_public);
+	}
+	function projectileState(rules, p) {
+		const d = [p.target[0] - p.origin[0], p.target[1] - p.origin[1]];
+		const axis = Math.abs(d[0]) >= Math.abs(d[1]) ? 0 : 1;
+		const traveled = Math.abs(p.exact_pos[axis] - p.origin[axis] * SUB);
+		const range = rules.attacks[p.attack]?.range;
+		return {
+			id: p.id,
+			owner: p.owner,
+			attack: p.attack,
+			origin: [p.origin[0], p.origin[1]],
+			target: [p.target[0], p.target[1]],
+			traveled,
+			max_travel: range === void 0 ? UNLIMITED_TRAVEL : range * SUB,
+			pos: [p.pos[0], p.pos[1]],
+			exact_pos: [p.exact_pos[0], p.exact_pos[1]],
+			speed: p.speed,
+			damage: p.damage,
+			bounces_left: p.bounces_left
+		};
+	}
+	function areaState(rules, tick, a) {
+		const explodes = tick + a.ticks_left - 1;
+		const atk = rules.attacks[a.attack];
+		const fuse = atk?.kind === "area" ? atk.fuse : 0;
+		return {
+			id: a.id,
+			owner: a.owner,
+			attack: a.attack,
+			pos: [a.pos[0], a.pos[1]],
+			origin: [a.pos[0], a.pos[1]],
+			launched_tick: explodes - fuse,
+			explodes_tick: explodes,
+			radius: a.radius,
+			damage: a.damage,
+			slow: a.slow
+		};
+	}
+	var untilTick = (tick, left) => Object.fromEntries(Object.entries(left).map(([k, n]) => [k, tick + n - 1]));
+	/**
+	* A state that agrees with everything `obs` shows, for fighter `hello.bot_id` on this tick. What
+	* it doesn't show comes from `assume`, otherwise from a cautious default: an enemy in sight has
+	* every attack ready (only its dash is shown), a pad out of sight is stocked, nothing is flying out
+	* of sight. An enemy out of sight needs `assume.enemy.pos`: where you think it is, which is the
+	* guess that matters most.
+	*/
+	function fromObservation(hello, obs, assume = {}, map) {
+		const rules = helloRules(hello);
+		const state = createMatch(rules, helloMap(hello, map), hello.seed_public);
+		const tick = obs.tick;
+		state.tick = tick;
+		state.zone = {
+			center: [obs.zone.center[0], obs.zone.center[1]],
+			radius: obs.zone.radius
+		};
+		const me = state.fighters.find((f) => f.id === hello.bot_id);
+		const enemy = state.fighters.find((f) => f.id !== hello.bot_id);
+		if (!me || !enemy) throw new Error(`forward: no fighter ${hello.bot_id} in this match`);
+		const s = obs.self;
+		Object.assign(me, {
+			pos: [s.pos[0], s.pos[1]],
+			hp: s.hp,
+			state: s.state,
+			state_end: s.state_ticks_left > 0 ? tick + s.state_ticks_left - 1 : 0,
+			cooldowns: {
+				...me.cooldowns,
+				...s.cooldowns
+			},
+			buffs: untilTick(tick, s.buffs),
+			ticks_outside: assume.self?.ticks_outside ?? 0,
+			damage_dealt: assume.self?.damage_dealt ?? 0,
+			alive: s.hp > 0
+		});
+		const seen = obs.enemies.find((e) => e.id === enemy.id);
+		const guess = assume.enemy ?? {};
+		const pos = seen?.pos ?? guess.pos;
+		if (!pos) throw new Error("forward: the enemy is out of sight; pass assume.enemy.pos (where you believe it is)");
+		const stateName = seen?.state ?? guess.state ?? "idle";
+		const ticksLeft = seen?.state_ticks_left ?? guess.state_ticks_left ?? 0;
+		Object.assign(enemy, {
+			pos: [pos[0], pos[1]],
+			hp: seen?.hp ?? guess.hp ?? rules.stats.max_hp,
+			state: stateName,
+			state_end: ticksLeft > 0 ? tick + ticksLeft - 1 : 0,
+			cooldowns: {
+				...Object.fromEntries(Object.keys(enemy.cooldowns).map((k) => [k, 0])),
+				...guess.cooldowns,
+				...seen ? { dash: seen.dash_cooldown } : {}
+			},
+			buffs: untilTick(tick, seen?.buffs ?? guess.buffs ?? {}),
+			ticks_outside: guess.ticks_outside ?? 0,
+			damage_dealt: guess.damage_dealt ?? 0
+		});
+		const shown = new Map(obs.pickups.map((p) => [p.id, p.ready_in]));
+		const stocked = rules.pickups ? rules.pickups.first_spawn : 0;
+		for (const pad of state.pickups) {
+			const readyIn = shown.get(pad.id) ?? assume.pickups?.[pad.id]?.ready_in ?? Math.max(0, stocked - tick);
+			pad.available = readyIn <= 0;
+			pad.respawn_tick = readyIn <= 0 ? pad.respawn_tick : tick + readyIn;
+		}
+		const shots = /* @__PURE__ */ new Map();
+		for (const p of [...assume.projectiles ?? [], ...obs.projectiles]) shots.set(p.id, p);
+		state.projectiles = [...shots.values()].sort((a, b) => a.id - b.id).map((p) => projectileState(rules, p));
+		const areas = /* @__PURE__ */ new Map();
+		for (const a of [...assume.areas ?? [], ...obs.areas]) areas.set(a.id, a);
+		state.areas = [...areas.values()].sort((a, b) => a.id - b.id).map((a) => areaState(rules, tick, a));
+		state.next_projectile_id = Math.max(0, ...state.projectiles.map((p) => p.id), ...state.areas.map((a) => a.id)) + 1;
+		return state;
+	}
+	/** The forward model. Every function takes and returns plain data; only `step` changes its argument. */
+	var forward = {
+		api: 1,
+		start,
+		fromObservation,
+		/** A copy to step without touching the original (the rules and map are shared, never changed). */
+		clone: cloneState,
+		/**
+		* Resolves one tick in place with each fighter's turn and returns its events. Each turn is
+		* validated as the ladder does: an illegal part is dropped (and reported as a `rejected` event),
+		* the rest is played. Throws once the match is over (`state.result` is set).
+		*/
+		step(state, turns) {
+			return step(state, turns);
+		},
+		/** What fighter `id` is told on this tick: the observation it would receive, without the server's budget and events. */
+		observe,
+		/** The steps and dashes fighter `id` could start now (the observation's `moves` and `dashes`). */
+		options(state, id) {
+			const f = state.fighters.find((x) => x.id === id);
+			if (!f) throw new Error(`forward: no fighter ${id}`);
+			return moveOptions(state, f);
+		},
+		/** How the engine would take fighter `id`'s turn now: the parts it plays and those it refuses. */
+		validate(state, id, turn) {
+			const f = state.fighters.find((x) => x.id === id);
+			if (!f) throw new Error(`forward: no fighter ${id}`);
+			return validateTurn(state, f, turn);
+		},
+		/** The ladder's hash of the whole state, as recorded with every replay tick. */
+		hash: stateHash
+	};
 	// packages/sim/src/trajectories.ts
 	/**
 	* Each fighter's trajectory in a recorded match, by fighter id. Exact but for what a replay
@@ -12011,6 +12186,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 	exports.Batch = Batch;
 	exports.ENGINE_VERSION = ENGINE_VERSION;
 	exports.EXTERNAL = EXTERNAL;
+	exports.FORWARD_API_VERSION = FORWARD_API_VERSION;
 	exports.Game = Game;
 	exports.HOUSE_BOTS = HOUSE_BOTS;
 	exports.MatchCore = MatchCore;
@@ -12029,6 +12205,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 	exports.cleanShout = cleanShout;
 	exports.decodeBasicGrid = decodeBasicGrid;
 	exports.encodeReplay = encodeReplay;
+	exports.forward = forward;
 	exports.frameOf = frameOf;
 	exports.frameOutcome = frameOutcome;
 	exports.gridLength = gridLength;

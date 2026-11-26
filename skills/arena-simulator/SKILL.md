@@ -14,7 +14,7 @@ No account or network is needed.
 
 ```bash
 curl -O https://victrisarena.com/download/arena-sim.mjs                         # JavaScript, Node 18+
-pip install https://victrisarena.com/download/victris_arena_sim-0.92.0-py3-none-any.whl    # Python 3.10+
+pip install https://victrisarena.com/download/victris_arena_sim-0.93.0-py3-none-any.whl    # Python 3.10+
 ```
 
 The same release is `victris-arena-sim` on npm and PyPI: pin it to the ladder's `versions.release`
@@ -107,6 +107,6 @@ against your own frozen checkpoints, and imitation learning from ladder replays
 | speed: `FastVectorEnv`, your own encoder and opponents as JavaScript | https://victrisarena.com/docs/simulator#fast-environments                     |
 | PPO on CPU or GPU, then a league                                     | https://victrisarena.com/docs/simulator#train-a-policy-the-example-ppo-script |
 | learn from strong bots' ladder games                                 | https://victrisarena.com/docs/simulator#learn-from-ladder-games               |
-| search ahead during a live match                                     | https://victrisarena.com/docs/simulator#use-it-during-a-match                 |
+| search ahead during a live match: `forward` / `ForwardModel`         | https://victrisarena.com/docs/simulator#look-ahead-the-forward-model          |
 
 A trained policy still has to fit the deadline: time it on the machine that will run it.

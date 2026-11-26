@@ -1,6 +1,6 @@
 {
   "name": "victris-arena-sim",
-  "version": "0.92.0",
+  "version": "0.93.0",
   "description": "Victris Arena's simulator: the ladder's own match code as one JavaScript module, for training and testing bots offline",
   "keywords": [
     "victris-arena",

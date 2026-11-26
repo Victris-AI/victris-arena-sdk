@@ -3,7 +3,9 @@ release and the rules hash with the ladder's GET /api answers it.
 
 Without asking anyone, the simulator also notices when what a ladder already sent you was played
 on other rules: a live match's hello (through `Basic`, `ScriptEncoder` or `check_hello`) and the
-replays `download_replays` fetches. It warns (`OutdatedSimulatorWarning`) once per rules table."""
+replays `download_replays` fetches. It warns (`OutdatedSimulatorWarning`) once per rules table, and
+once per engine version when a hello names another engine (the engine can change while the rules
+stay the same)."""
 
 from __future__ import annotations
 
@@ -52,6 +54,8 @@ def rules_note(r: dict[str, Any]) -> str:
 _ctx: Any = None
 # by rules table: whether it is this simulator's game (warned about once)
 _seen: dict[str, bool] = {}
+# by engine version: whether it is this simulator's engine (warned about once)
+_engines: dict[str, bool] = {}
 
 # Limits are the ladder's live operational settings, which it writes into each match's rules: they
 # change without a release and don't change the game, so the comparison leaves them out.
@@ -66,19 +70,40 @@ function __sameGame(text) {
 """
 
 
-def same_rules(rules: dict[str, Any], where: str) -> bool:
-    """Whether `rules` (a match's) are the game this simulator ships, limits aside. Warns once per
-    rules table when they aren't; `where` says what was played on them ("This ladder match is played")."""
-    key = json.dumps(rules, sort_keys=True)
-    if key in _seen:
-        return _seen[key]
+def _js() -> Any:
     global _ctx
     if _ctx is None:
         from ._core import _load
 
         _ctx = _load()
         _ctx.eval(_SAME_GAME)
-    r = json.loads(_ctx.eval(f"__sameGame({json.dumps(key)})"))
+    return _ctx
+
+
+def same_engine(engine: str, where: str) -> bool:
+    """Whether `engine` (a match's engine version) is this simulator's. Warns once per version when it isn't."""
+    if engine in _engines:
+        return _engines[engine]
+    v = json.loads(_js().eval("JSON.stringify({ ours: ArenaSim.ENGINE_VERSION, release: ArenaSim.RELEASE })"))
+    _engines[engine] = engine == v["ours"]
+    if not _engines[engine]:
+        warnings.warn(
+            f"{where} on engine {engine}, but arena_sim {v['release']} has engine {v['ours']}: matches here don't "
+            "resolve as they do on that ladder, even where the rules are the same. See what changed with python -m "
+            "arena_sim changelog, and install the ladder's simulator (GET /api → simulator.python).",
+            OutdatedSimulatorWarning,
+            stacklevel=3,
+        )
+    return _engines[engine]
+
+
+def same_rules(rules: dict[str, Any], where: str) -> bool:
+    """Whether `rules` (a match's) are the game this simulator ships, limits aside. Warns once per
+    rules table when they aren't; `where` says what was played on them ("This ladder match is played")."""
+    key = json.dumps(rules, sort_keys=True)
+    if key in _seen:
+        return _seen[key]
+    r = json.loads(_js().eval(f"__sameGame({json.dumps(key)})"))
     _seen[key] = r["same"]
     if not r["same"]:
         version = r["theirs"] if r["theirs"] != r["ours"] else f"{r['theirs']}, though not this release's table of that version"
@@ -93,10 +118,12 @@ def same_rules(rules: dict[str, Any], where: str) -> bool:
 
 
 def check_hello(hello: dict[str, Any]) -> bool:
-    """Whether a live match's `hello` has this simulator's rules (limits aside); warns once per rules
-    table when it hasn't. Call it when a match starts in a bot with an encoder of your own (`Basic`
+    """Whether a live match's `hello` has this simulator's rules (limits aside) and engine; warns once per
+    rules table or engine version when it hasn't. Call it when a match starts in a bot with an encoder of your own (`Basic`
     and `ScriptEncoder` do). Matches the simulator itself plays, and replays, are its own game."""
     match = str(hello.get("match_id", ""))
     if match.startswith("sim-") or match == "replay" or "rules" not in hello:
         return True
-    return same_rules(hello["rules"], "This ladder match is played")
+    engine = hello.get("engine_version")
+    same = engine is None or same_engine(str(engine), "This ladder match is played")
+    return same_rules(hello["rules"], "This ladder match is played") and same

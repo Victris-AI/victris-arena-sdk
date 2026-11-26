@@ -22,6 +22,9 @@ The package was called `arena-sim` through release 0.89.x; the import name is un
   place (no JSON), about 7 times faster a process, and split over worker processes with `workers=N`.
   `scripts=` loads JavaScript that registers your own bots (opponents, teachers) and encoders;
   `ScriptedOpponent`s (bots written in Python) play and teach there too.
+- `ForwardModel`: the engine's own tick, for bots that search ahead: build a state from a `hello` or an
+  observation (with your guesses for what the fog hides), then `step_many` candidate turns in one call.
+  `Simulator.state(i)` gives a game's whole state.
 - `ScriptEncoder`: an encoder from the simulator in a live Python bot; `check_encoder` checks one
   reads the ladder's JSON as it reads the batch.
 - `arena_sim.sb3.ArenaVecEnv`: the batched environments for Stable-Baselines3 and sb3-contrib's

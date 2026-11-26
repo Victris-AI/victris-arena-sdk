@@ -156,6 +156,11 @@ class Simulator:
         """Game i's result (`winner`, `reason`, `final_tick`), or None while it is running."""
         return json.loads(self._js().eval(f"JSON.stringify(__batch.game({int(i)}).result)"))
 
+    def state(self, i: int) -> dict:
+        """Game i's whole match state as it stands, fog and all: what `ForwardModel` steps. For training
+        and testing a search with the truth; on the ladder a bot only has its observations."""
+        return json.loads(self._js().eval(f"JSON.stringify(__batch.game({int(i)}).state())"))
+
     def replay(self, i: int) -> dict:
         """Game i's replay, once it is over: `header`, `ticks` and `result`, as the ladder records them."""
         return json.loads(self._js().eval(f"JSON.stringify(__batch.game({int(i)}).replay())"))

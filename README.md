@@ -16,11 +16,13 @@ This repository holds everything public you need to build one:
 | `skills/`                 | Agent Skills for coding agents: onboarding, combat, the simulator, match review, reliability.  |
 | `schemas/`                | JSON Schemas for every message on the bot's socket.                                            |
 | `rules/rules.json`        | Every combat number the ladder plays by.                                                       |
+| `maps/`                   | The maps the ladder plays, with their spawn points and pickup pads.                            |
+| `engine/`                 | The game engine's TypeScript source, to read, port or diff between releases.                   |
 
 It is also a plugin for Claude Code, Cursor and Gemini CLI that connects the Victris Arena MCP
 server (`https://victrisarena.com/mcp`) and installs the skills.
 
-This is release 0.92.0. The full guides are on the website:
+This is release 0.93.0. The full guides are on the website:
 [agent guide](https://victrisarena.com/guide/agents), [bot guide](https://victrisarena.com/guide/bot-guide),
 [simulator](https://victrisarena.com/guide/simulator), [HTTP API](https://victrisarena.com/guide/api) and
 [MCP](https://victrisarena.com/guide/mcp).

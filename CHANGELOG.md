@@ -4,6 +4,28 @@ What changed for players in each release of Victris Arena: the rules, the engine
 
 ## Unreleased
 
+## 0.93.0 — 2026-11-26
+
+Release 0.93.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.8
+
+**Action for bot authors:** bots need no changes. Protocol 0.8 only adds `hello.engine_version`; clients that check the hello's `protocol_version` should accept 0.8. If your bot copies or ports the engine to search ahead, check `engine_version` at the start of each match, or switch to the simulator's new `forward` model.
+
+### Bot protocol and simulator
+
+- **`hello` names the match's engine.** A new field, `engine_version`, gives the engine version the match runs on, the same as `versions.engine` in `GET /api`. The engine can change in a release while `hello.rules.version` stays the same (0.91.0 changed how pickups are taken under the same rules version). If your bot copies the engine to search ahead, check this field at the start of each match. Bots that don't need it can ignore it.
+- **Search ahead with the engine's own tick.** The simulator now has a supported forward model, `forward`, for bots that look ahead. `forward.start(hello)` builds a match's exact first state and `forward.fromObservation(hello, obs, assume)` builds the state your bot sees, with your guesses for what the fog hides. Then `clone`, `step`, `observe`, `options`, `validate` and `hash` let you try candidate turns against likely replies. `game.state()` gives a simulated game's whole state. In Python, `ForwardModel` does the same (`step_many` expands many turns in one call) and `Simulator.state(i)` gives a game's state. If your bot appends an `export` line to `arena-sim.mjs` to reach the engine's internals, switch to `forward`: it is versioned (`forward.api`) and stays stable between releases. See the simulator guide's [forward model](https://victrisarena.com/guide/simulator#look-ahead-the-forward-model). It refuses a `hello` from another engine version.
+- **The engine's source is in the SDK repository.** The [Victris Arena SDK](https://github.com/Victris-AI/victris-arena-sdk) now carries the engine's TypeScript in `engine/` and the maps in `maps/`, under the MIT licence, at every release's tag. If you port the engine to another language, read and diff it there instead of unpacking the simulator's source map.
+- **The Python package also warns about another engine.** `check_hello`, `Basic` and `ScriptEncoder` raise an `OutdatedSimulatorWarning` when a live match's `hello` names an engine version other than the simulator's, even when the rules are the same.
+
+### Agents and MCP
+
+- **Build a bot from Claude's chat app.** The agent guide has a new section, [Working from a chat assistant](https://victrisarena.com/guide/agents#working-from-a-chat-assistant): a chat app with a code sandbox can write a bot and test it in the simulator, then hand it to you with a launcher you double-click to start it. Create a Bot and My Bots link to it. Building and running a bot still works best in a coding agent such as Claude Code.
+- **Agent entries say where each one runs.** In `GET /api/agents` and `get_agent_standings`, each `catalog` entry has a `description`, set where one maker has several entries (Claude Code and the Claude app, Codex and ChatGPT, Google's agents) and null elsewhere, so an agent credits the right one. If your bot was built in Claude's chat app but shows Claude Code, change it to `claude-app` with `update_bot` or on My Bots.
+- **`watch_match` plays older matches in the conversation.** A match played on an earlier release used to show only a link to the website in clients that show MCP Apps; it now plays inline like any other.
+- **League owners and organizers join the team they create with `join_league_team`.** Before, the team was made but they weren't on it. In the HTTP API, a `create` command joins an organizer to the new team when it sends `"join": true`; teams organizers make for others on the League's page still start empty.
+- **`list_my_bots` says which ladder each bot is connected to.** Its new `online_ladder` field is public or a League's ID, or null when the bot is offline. `get_bot` and `get_ladder_status` still say whether a bot is online on the one ladder you ask about, so a bot playing in a League shows as offline on the public ladder.
+- **The bot card and leaderboard no longer end in "Loading…".** In clients that show MCP Apps, `show_bot` and `show_leaderboard` drew their contents but left their loading message underneath.
+
 ## 0.92.0 — 2026-11-26
 
 Release 0.92.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.7
