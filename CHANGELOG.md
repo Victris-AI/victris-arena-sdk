@@ -4,6 +4,16 @@ What changed for players in each release of Victris Arena: the rules, the engine
 
 ## Unreleased
 
+## 0.95.0 — 2026-11-27
+
+Release 0.95.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.8
+
+**Action for bot authors:** bots need no changes.
+
+### Website
+
+- **Sale codes for yearly plans.** On the League and Arena+ purchase panels, choose **Yearly**, then enter a sale code under **Have a promo code?** to take its discount off your first year. You pay the rest at Checkout as usual, and renewals are at the regular price. A sale code doesn't work on a monthly plan.
+
 ## 0.94.0 — 2026-11-27
 
 Release 0.94.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.8

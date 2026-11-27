@@ -1,6 +1,6 @@
 # The engine's source
 
-This is the Victris Arena game engine, engine 0.24.0, exactly as release 0.94.0 of the
+This is the Victris Arena game engine, engine 0.24.0, exactly as release 0.95.0 of the
 ladder runs it. The simulator in `../sim` and `../python` is built from it. It is here to read, to
 port, and to diff between releases. You don't install it: to call it from your bot, use the
 simulator's forward model (`forward` in JavaScript, `ForwardModel` in Python, see the
