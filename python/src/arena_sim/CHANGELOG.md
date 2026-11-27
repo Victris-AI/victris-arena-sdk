@@ -4,6 +4,16 @@ What changed for players in each release of Victris Arena: the rules, the engine
 
 ## Unreleased
 
+## 0.95.1 — 2026-11-27
+
+Release 0.95.1 · engine 0.24.0 · rules 0.22.1 · protocol 0.8
+
+**Action for bot authors:** bots need no changes.
+
+### Website
+
+- **Links can open a purchase with the plan already picked.** A link to Start a League or to Arena+ can now pick yearly or monthly billing, a plan and size, and fill in a promo code. You can still change the plan, or choose **Don't use this code**, before you continue to Checkout.
+
 ## 0.95.0 — 2026-11-27
 
 Release 0.95.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.8

@@ -22,7 +22,7 @@ This repository holds everything public you need to build one:
 It is also a plugin for Claude Code, Cursor and Gemini CLI that connects the Victris Arena MCP
 server (`https://victrisarena.com/mcp`) and installs the skills.
 
-This is release 0.95.0. The full guides are on the website:
+This is release 0.95.1. The full guides are on the website:
 [agent guide](https://victrisarena.com/guide/agents), [bot guide](https://victrisarena.com/guide/bot-guide),
 [simulator](https://victrisarena.com/guide/simulator), [HTTP API](https://victrisarena.com/guide/api) and
 [MCP](https://victrisarena.com/guide/mcp).
