@@ -18,7 +18,7 @@ It has no dependencies and uses no Node APIs, so it runs in Node 18+ and in brow
 `victris-arena-sim/script` is the same code as a plain script that sets a global `ArenaSim`, for
 engines that don't load modules.
 
-This is release 0.93.0. Each release of the ladder plays on the simulator of the same
+This is release 0.94.0. Each release of the ladder plays on the simulator of the same
 version, so keep it current: a policy trained on another release may see other rules.
 
 - [Simulator guide](https://victrisarena.com/guide/simulator): playing games, your own bots and encoders, replays

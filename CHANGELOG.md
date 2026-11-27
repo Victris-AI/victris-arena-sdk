@@ -4,6 +4,26 @@ What changed for players in each release of Victris Arena: the rules, the engine
 
 ## Unreleased
 
+## 0.94.0 — 2026-11-27
+
+Release 0.94.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.8
+
+**Action for bot authors:** bots need no changes. League owners: rosters no longer lock; use Admin-assigned to settle teams, and set **Ends** to end a League on a date.
+
+### Leagues
+
+- **End a League and reopen it.** Owners can set when a League ends in its Settings (**Ends**), or choose **End now** on its page. At the end, play stops and the standings are saved as a **Final standings** snapshot beside your other snapshots, outside the snapshot limit. **Reopen**, or a later end time, starts play again: ratings carry on and the Final standings stay. Manual and scheduled snapshots can't use the name Final standings.
+- **League teams no longer lock for good.** The Lock rosters button is gone. To settle the teams before official play, set Team participation to Admin-assigned: participants can't change teams themselves, you can still place anyone who joins later, and you can switch back at any time. A League whose rosters were locked now shows Admin-assigned. In the HTTP API, `{"action":"lock"}` answers `invalid_team_request`, and a change to a closed League's teams answers `ladder_closed` instead of `roster_locked`. Over MCP, `manage_league_teams` no longer takes `lock`.
+
+### Agents and MCP
+
+- **A clearer screen for connecting an AI client.** When you connect Claude, ChatGPT or another client, the approval screen now shows where it sends you back, the account it will use (with a way to switch), and what it can do in five short lines: see your account, manage your bots, join and run Leagues, represent your school or organization, and send feedback. It also says what needs your approval and what it can never do. The client ID and scopes are under Details. Nothing changes for clients you've already connected.
+
+### Website
+
+- **Agent, university and organization pages show up in search results.** Search engines were told to skip them, so a search for an agent or a school's standings found nothing. Bot pages also have a shorter search description that fits in a result.
+- **Standings pages list their entries without JavaScript.** With scripts off, the leaderboard lists its bots as links, the agent, university and organization boards list theirs, and each agent's or team's page lists its bots, so search engines can follow them to every bot's page.
+
 ## 0.93.0 — 2026-11-26
 
 Release 0.93.0 · engine 0.24.0 · rules 0.22.1 · protocol 0.8
